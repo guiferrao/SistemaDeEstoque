@@ -18,13 +18,17 @@ namespace SistemaDeEstoque.Controllers
         }
 
         [HttpGet("v1/produtos")]
-        public async Task<IActionResult> ObterProdutos()
+        public async Task<IActionResult> ObterProdutos(
+            [FromQuery] int page = 0,
+            [FromQuery] int PageSize = 25)
         {
             try
             {
                 var produtos = await _context.Produtos
                     .AsNoTracking()
                     .Include(x => x.Categoria)
+                    .Skip(page * PageSize)
+                    .Take(PageSize)
                     .ToListAsync();
                 return Ok(new ResultViewModel<List<Produto>>(produtos));
             }
@@ -72,7 +76,7 @@ namespace SistemaDeEstoque.Controllers
                 };
 
                 _context.Produtos.Add(produto);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
                 return Created($"v1/produtos/{produto.Id}", new ResultViewModel<Produto>(produto));
             }
@@ -101,7 +105,7 @@ namespace SistemaDeEstoque.Controllers
                 produto.CategoriaId = model.CategoriaId;
 
                 _context.Produtos.Update(produto);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return Ok(new ResultViewModel<Produto>(produto));
             }
             catch (Exception ex)
@@ -121,7 +125,7 @@ namespace SistemaDeEstoque.Controllers
                     return NotFound(new ResultViewModel<Produto>("Produto não encontrado"));
                 }
                 _context.Produtos.Remove(produto);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return Ok(new ResultViewModel<Produto>(produto));
             }
             catch (Exception ex)
